@@ -3,6 +3,8 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 
 	"../../common"
 	"../../secrets"
@@ -30,7 +32,6 @@ func Initialize() {
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 // Insert inserts artists data into the database
@@ -38,11 +39,16 @@ func Insert(items []common.Item) {
 	insertStatement := `INSERT INTO artists (id, name, popularity) VALUES ($1, $2, $3)`
 	numInserted := 0
 	for i := 0; i < len(items); i++ {
-		_, err := db.Exec(insertStatement, items[i].ID, items[i].Name, items[i].Popularity)
+		id := items[i].ID
+		_, err := db.Exec(insertStatement, id, items[i].Name, items[i].Popularity)
 		if err != nil {
-			panic(err)
+			if !strings.Contains(err.Error(), "duplicate key") {
+				panic(err)
+			} else {
+				log.Printf("Duplicate key found: %s\n", id)
+			}
 		}
 		numInserted++
 	}
-	fmt.Println(fmt.Sprintf("%d row(s) inserted", numInserted))
+	log.Printf("%d row(s) inserted\n", numInserted)
 }
