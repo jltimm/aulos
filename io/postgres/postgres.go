@@ -22,20 +22,18 @@ func Initialize() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		secrets.GetHost(), secrets.GetPort(), secrets.GetUser(), secrets.GetPassword(), secrets.GetDbname())
-
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-
 	err = db.Ping()
 	if err != nil {
 		panic(err)
 	}
 }
 
-// Insert inserts artists data into the database
-func Insert(items []common.Item) {
+// InsertArtist inserts artists data into the database
+func InsertArtist(items []common.Item) {
 	insertStatement := `INSERT INTO artists (id, name, popularity) VALUES ($1, $2, $3)`
 	numInserted := 0
 	for i := 0; i < len(items); i++ {
@@ -47,8 +45,20 @@ func Insert(items []common.Item) {
 			} else {
 				log.Printf("Duplicate key found: %s\n", id)
 			}
+		} else {
+			numInserted++
 		}
-		numInserted++
 	}
 	log.Printf("%d row(s) inserted\n", numInserted)
+}
+
+// GetArtistCount returns the number of rows in the artists table
+func GetArtistCount() int {
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM artists")
+	err := row.Scan(&count)
+	if err != nil {
+		panic(err)
+	}
+	return count
 }

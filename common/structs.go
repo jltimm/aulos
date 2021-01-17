@@ -22,3 +22,14 @@ type Artists struct {
 type Response struct {
 	Artists Artists `json:"artists"`
 }
+
+// NotFoundError is the error returned by Spotify
+type NotFoundError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+// NotFound is the error returned by Spotify
+type NotFound struct {
+	Error NotFoundError `json:"error"`
+}
