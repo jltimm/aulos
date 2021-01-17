@@ -9,30 +9,9 @@ import (
 	"time"
 
 	"../auth"
+	"../common"
+	"../io/postgres"
 )
-
-// Item is part of Spotify's JSON response and contains
-// the Spotify ID, name of the artist, and the popularity
-type Item struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Popularity int    `json:"popularity"`
-}
-
-// Artists is a part of Spotify's JSON response and contains
-// the list of artists, the next page, current offset, and previous page
-type Artists struct {
-	Items    []Item `json:"items"`
-	Next     string `json:"next"`
-	Offset   int    `json:"offset"`
-	Previous string `json:"previous"`
-}
-
-// Response is part of Spotify's JSON response and contains
-// the data that we need
-type Response struct {
-	Artists Artists `json:"artists"`
-}
 
 var client = auth.GetConfig().Client(context.Background())
 
@@ -45,8 +24,9 @@ func Crawl(url string) {
 	}
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode == 200 {
-		var response Response
+		var response common.Response
 		json.Unmarshal([]byte(body), &response)
+		go postgres.Insert(response.Artists.Items)
 		if response.Artists.Next != "" {
 			// Sleep for five seconds as not to hammer the API
 			time.Sleep(5000 * time.Millisecond)
