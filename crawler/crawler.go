@@ -56,7 +56,11 @@ func crawlArtists(url string) {
 
 func crawlRecommendedArtists() {
 	artists := postgres.GetArtistsWithNullRecommended()
-	for i := 0; i < len(artists); i++ {
+	numArtists := len(artists)
+	if numArtists == 0 {
+		return
+	}
+	for i := 0; i < numArtists; i++ {
 		id := artists[i]
 		body, statusCode := getResponseBodyAndStatus(secrets.GetRecommendedURL(id))
 		if statusCode == 200 {
@@ -69,6 +73,8 @@ func crawlRecommendedArtists() {
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
+	// crawl through the artists that were just added
+	crawlRecommendedArtists()
 }
 
 // Crawl grabs the top 10,000 artists on Spotify

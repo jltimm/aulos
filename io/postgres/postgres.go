@@ -14,6 +14,11 @@ import (
 
 var db *sql.DB
 
+// Close closes the database in the shutdown hook
+func Close() {
+	db.Close()
+}
+
 // Initialize postgres
 func Initialize() {
 	var err error
@@ -40,8 +45,6 @@ func InsertArtists(items []common.Item) {
 		if err != nil {
 			if !strings.Contains(err.Error(), "duplicate key") {
 				panic(err)
-			} else {
-				log.Printf("Duplicate key found: %s\n", id)
 			}
 		} else {
 			numInserted++
