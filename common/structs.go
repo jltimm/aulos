@@ -8,6 +8,12 @@ type Item struct {
 	Popularity int    `json:"popularity"`
 }
 
+// RecommendedResponse is the response returned from the
+// recommended endpoint
+type RecommendedResponse struct {
+	Artists []Item `json:"artists"`
+}
+
 // Artists is a part of Spotify's JSON response and contains
 // the list of artists, the next page, current offset, and previous page
 type Artists struct {

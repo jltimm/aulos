@@ -11,9 +11,23 @@ import (
 	"../auth"
 	"../common"
 	"../io/postgres"
+	"../secrets"
 )
 
 var client = auth.GetConfig().Client(context.Background())
+
+func getResponseBodyAndStatus(url string) ([]byte, int) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error on response.\n[ERRO] -", err)
+	}
+	body, _ := ioutil.ReadAll(resp.Body)
+	return body, resp.StatusCode
+}
 
 func crawlArtists(url string) {
 	count := postgres.GetArtistCount()
@@ -21,22 +35,17 @@ func crawlArtists(url string) {
 		log.Printf("%d rows in table: skipping artist crawl\n", count)
 		return
 	}
-	req, err := http.NewRequest("GET", url, nil)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("Error on response.\n[ERRO] -", err)
-	}
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode == 200 {
+	body, statusCode := getResponseBodyAndStatus(url)
+	if statusCode == 200 {
 		var response common.Response
 		json.Unmarshal([]byte(body), &response)
-		postgres.InsertArtist(response.Artists.Items)
+		postgres.InsertArtists(response.Artists.Items)
 		if response.Artists.Next != "" {
 			// Sleep for five seconds as not to hammer the API
 			time.Sleep(1000 * time.Millisecond)
 			Crawl(response.Artists.Next)
 		}
-	} else if resp.StatusCode == 404 {
+	} else if statusCode == 404 {
 		var response common.NotFound
 		json.Unmarshal(body, &response)
 		log.Println(response.Error.Message)
@@ -45,7 +54,25 @@ func crawlArtists(url string) {
 	}
 }
 
+func crawlRecommendedArtists() {
+	artists := postgres.GetArtistsWithNullRecommended()
+	for i := 0; i < len(artists); i++ {
+		id := artists[i]
+		body, statusCode := getResponseBodyAndStatus(secrets.GetRecommendedURL(id))
+		if statusCode == 200 {
+			var response common.RecommendedResponse
+			json.Unmarshal([]byte(body), &response)
+			postgres.InsertArtists(response.Artists)
+			postgres.UpdateRecommended(id, response.Artists)
+		} else {
+			log.Println(string(body))
+		}
+		time.Sleep(1000 * time.Millisecond)
+	}
+}
+
 // Crawl grabs the top 10,000 artists on Spotify
 func Crawl(url string) {
 	crawlArtists(url)
+	crawlRecommendedArtists()
 }
