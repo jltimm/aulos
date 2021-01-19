@@ -37,11 +37,15 @@ func Initialize() {
 
 // InsertArtists inserts artists data into the database
 func InsertArtists(items []common.Item) {
-	insertStatement := `INSERT INTO artists (id, name, popularity) VALUES ($1, $2, $3)`
+	insertStatement := `INSERT INTO artists (id, name, popularity, image_data) VALUES ($1, $2, $3, $4)`
 	numInserted := 0
 	for i := 0; i < len(items); i++ {
 		id := items[i].ID
-		_, err := db.Exec(insertStatement, id, items[i].Name, items[i].Popularity)
+		var image common.Image
+		if len(items[i].Images) > 0 {
+			image = items[i].Images[0]
+		}
+		_, err := db.Exec(insertStatement, id, items[i].Name, items[i].Popularity, image)
 		if err != nil {
 			if !strings.Contains(err.Error(), "duplicate key") {
 				panic(err)

@@ -13,6 +13,7 @@ import (
 
 func cleanup() {
 	fmt.Println("Shutting down...")
+	postgres.Close()
 }
 
 func main() {
