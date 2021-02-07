@@ -40,6 +40,10 @@ func InsertArtists(items []common.Item) {
 	insertStatement := `INSERT INTO artists (id, name, popularity, image_data) VALUES ($1, $2, $3, $4)`
 	numInserted := 0
 	for i := 0; i < len(items); i++ {
+		popularity := items[i].Popularity
+		if popularity <= 60 {
+			continue
+		}
 		id := items[i].ID
 		var image common.Image
 		if len(items[i].Images) > 0 {
@@ -63,6 +67,9 @@ func UpdateRecommended(id string, recommendedArtists []common.Item) {
 	updateStatement := "UPDATE artists SET recommended = $1 WHERE id = $2"
 	var artists []string
 	for i := 0; i < len(recommendedArtists); i++ {
+		if recommendedArtists[i].Popularity <= 60 {
+			continue
+		}
 		artists = append(artists, recommendedArtists[i].ID)
 	}
 	_, err := db.Exec(updateStatement, pq.Array(artists), id)

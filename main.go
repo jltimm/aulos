@@ -25,5 +25,5 @@ func main() {
 		os.Exit(1)
 	}()
 	postgres.Initialize()
-	crawler.Crawl(secrets.GetSearchURL(0, 50))
+	crawler.Crawl(secrets.GetSearchURL(0, 1))
 }
