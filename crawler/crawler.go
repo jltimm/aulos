@@ -30,21 +30,11 @@ func getResponseBodyAndStatus(url string) ([]byte, int) {
 }
 
 func crawlArtists(url string) {
-	count := postgres.GetArtistCount()
-	if count >= 2000 {
-		log.Printf("%d rows in table: skipping artist crawl\n", count)
-		return
-	}
 	body, statusCode := getResponseBodyAndStatus(url)
 	if statusCode == 200 {
 		var response common.Response
 		json.Unmarshal([]byte(body), &response)
 		postgres.InsertArtists(response.Artists.Items)
-		if response.Artists.Next != "" {
-			// Sleep for five seconds as not to hammer the API
-			time.Sleep(1000 * time.Millisecond)
-			Crawl(response.Artists.Next)
-		}
 	} else if statusCode == 404 {
 		var response common.NotFound
 		json.Unmarshal(body, &response)
@@ -71,7 +61,7 @@ func crawlRecommendedArtists() {
 		} else {
 			log.Println(string(body))
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 	// crawl through the artists that were just added
 	crawlRecommendedArtists()
