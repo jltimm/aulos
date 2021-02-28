@@ -3,7 +3,20 @@ package common
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 )
+
+// Artist is a struct representing what is stored in the database
+type Artist struct {
+	ID          string
+	Name        string
+	Popularity  int
+	Recommended []string
+	ImageData   Image
+}
+
+// Array is a type alias to allow for a receiver function
+type Array []string
 
 // Item is part of Spotify's JSON response and contains
 // the Spotify ID, name of the artist, and the popularity
@@ -56,4 +69,23 @@ type NotFound struct {
 // Value helps with insertion of json data
 func (imageData Image) Value() (driver.Value, error) {
 	return json.Marshal(imageData)
+}
+
+// Scan helps with the retrieval of json data
+func (imageData *Image) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, &imageData)
+}
+
+// Contains returns true if the value is in the array
+func (arr Array) Contains(value string) bool {
+	for i := 0; i < len(arr); i++ {
+		if arr[i] == value {
+			return true
+		}
+	}
+	return false
 }

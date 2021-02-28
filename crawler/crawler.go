@@ -67,8 +67,34 @@ func crawlRecommendedArtists() {
 	crawlRecommendedArtists()
 }
 
-// Crawl grabs the top 10,000 artists on Spotify
+func createMap(artists []common.Artist) map[string]common.Array {
+	artistsMap := make(map[string]common.Array)
+	for i := 0; i < len(artists); i++ {
+		artist := artists[i]
+		artistsMap[artist.ID] = artist.Recommended
+	}
+	return artistsMap
+}
+
+func updateRecommendedArtists() {
+	artists := postgres.GetAllArtists()
+	artistsMap := createMap(artists)
+	for i := 0; i < len(artists); i++ {
+		artist := artists[i]
+		for j := 0; j < len(artist.Recommended); j++ {
+			artistToUpdateRecommended := artistsMap[artist.Recommended[j]]
+			if !artistToUpdateRecommended.Contains(artist.ID) {
+				artistToUpdateRecommended = append(artistToUpdateRecommended, artist.ID)
+			}
+			artistsMap[artist.Recommended[j]] = artistToUpdateRecommended
+		}
+	}
+	postgres.UpdateMissingRecommended(artistsMap)
+}
+
+// Crawl grabs the top 5,000 artists on Spotify
 func Crawl(url string) {
 	crawlArtists(url)
 	crawlRecommendedArtists()
+	updateRecommendedArtists()
 }

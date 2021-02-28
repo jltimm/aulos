@@ -78,6 +78,17 @@ func UpdateRecommended(id string, recommendedArtists []common.Item) {
 	}
 }
 
+// UpdateMissingRecommended essentially makes an undirected graph
+func UpdateMissingRecommended(m map[string]common.Array) {
+	updateStatement := "UPDATE artists SET recommended = $1 WHERE id = $2"
+	for k, v := range m {
+		_, err := db.Exec(updateStatement, pq.Array(v), k)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 // GetArtistCount returns the number of rows in the artists table
 func GetArtistCount() int {
 	var count int
@@ -107,6 +118,21 @@ func GetArtistsWithNullRecommended() []string {
 	err = rows.Err()
 	if err != nil {
 		panic(err)
+	}
+	return artists
+}
+
+// GetAllArtists returns all of the artists
+func GetAllArtists() []common.Artist {
+	rows, err := db.Query("SELECT id, name, popularity, recommended, image_data FROM artists")
+	if err != nil {
+		panic(err)
+	}
+	var artists []common.Artist
+	for rows.Next() {
+		var artist common.Artist
+		err = rows.Scan(&artist.ID, &artist.Name, &artist.Popularity, pq.Array(&artist.Recommended), &artist.ImageData)
+		artists = append(artists, artist)
 	}
 	return artists
 }
