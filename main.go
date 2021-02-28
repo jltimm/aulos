@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -24,6 +25,8 @@ func main() {
 		cleanup()
 		os.Exit(1)
 	}()
+	limitPtr := flag.Int("limit", 5000, "The maximum number of artists to crawl")
+	flag.Parse()
 	postgres.Initialize()
-	crawler.Crawl(secrets.GetSearchURL(0, 1))
+	crawler.Crawl(secrets.GetSearchURL(0, 1), *limitPtr)
 }

@@ -44,7 +44,7 @@ func crawlArtists(url string) {
 	}
 }
 
-func crawlRecommendedArtists() {
+func crawlRecommendedArtists(limit int) {
 	artists := postgres.GetArtistsWithNullRecommended()
 	numArtists := len(artists)
 	if numArtists == 0 {
@@ -58,13 +58,16 @@ func crawlRecommendedArtists() {
 			json.Unmarshal([]byte(body), &response)
 			postgres.InsertArtists(response.Artists)
 			postgres.UpdateRecommended(id, response.Artists)
+			if postgres.GetArtistCount() > limit {
+				return
+			}
 		} else {
 			log.Println(string(body))
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 	// crawl through the artists that were just added
-	crawlRecommendedArtists()
+	crawlRecommendedArtists(limit)
 }
 
 func createMap(artists []common.Artist) map[string]common.Array {
@@ -89,12 +92,35 @@ func updateRecommendedArtists() {
 			artistsMap[artist.Recommended[j]] = artistToUpdateRecommended
 		}
 	}
-	postgres.UpdateMissingRecommended(artistsMap)
+	postgres.UpdateRecommendedFromMap(artistsMap)
 }
 
-// Crawl grabs the top 5,000 artists on Spotify
-func Crawl(url string) {
+func pruneRecommendedArtists() {
+	artists := postgres.GetAllArtists()
+	artistsMap := createMap(artists)
+	for i := 0; i < len(artists); i++ {
+		artist := artists[i]
+		var artistsToRemove common.Array
+		for j := 0; j < len(artist.Recommended); j++ {
+			if _, ok := artistsMap[artist.Recommended[j]]; !ok {
+				artistsToRemove = append(artistsToRemove, artist.Recommended[j])
+			}
+		}
+		var newRecommended []string
+		for k := 0; k < len(artist.Recommended); k++ {
+			if !artistsToRemove.Contains(artist.Recommended[k]) {
+				newRecommended = append(newRecommended, artist.Recommended[k])
+			}
+		}
+		artistsMap[artist.ID] = newRecommended
+	}
+	postgres.UpdateRecommendedFromMap(artistsMap)
+}
+
+// Crawl grabs artists on Spotify
+func Crawl(url string, limit int) {
 	crawlArtists(url)
-	crawlRecommendedArtists()
+	crawlRecommendedArtists(limit)
+	pruneRecommendedArtists()
 	updateRecommendedArtists()
 }

@@ -78,8 +78,8 @@ func UpdateRecommended(id string, recommendedArtists []common.Item) {
 	}
 }
 
-// UpdateMissingRecommended essentially makes an undirected graph
-func UpdateMissingRecommended(m map[string]common.Array) {
+// UpdateRecommendedFromMap essentially makes an undirected graph
+func UpdateRecommendedFromMap(m map[string]common.Array) {
 	updateStatement := "UPDATE artists SET recommended = $1 WHERE id = $2"
 	for k, v := range m {
 		_, err := db.Exec(updateStatement, pq.Array(v), k)
