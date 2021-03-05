@@ -15,3 +15,5 @@
 # vendor/
 
 secrets/
+main
+data.json

@@ -6,13 +6,28 @@ import (
 	"errors"
 )
 
+// Output holds together all of the data
+type Output struct {
+	AllArtists          []Artist  `json:"all_artists"`
+	FloydWarshallMatrix [][]int   `json:"floyd_warshall_matrix"`
+	ShortestPathsMatrix [][]int   `json:"shortest_paths_matrix"`
+	IndexIDMap          []IndexID `json:"index_id_map"`
+}
+
+// IndexID holds the index-id mapping for the
+// floyd warshall matrix
+type IndexID struct {
+	Index int    `json:"index"`
+	ID    string `json:"id"`
+}
+
 // Artist is a struct representing what is stored in the database
 type Artist struct {
-	ID          string
-	Name        string
-	Popularity  int
-	Recommended []string
-	ImageData   Image
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Popularity  int      `json:"popularity"`
+	Recommended []string `json:"recommended"`
+	ImageData   Image    `json:"image_data"`
 }
 
 // Array is a type alias to allow for a receiver function

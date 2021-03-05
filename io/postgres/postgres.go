@@ -13,10 +13,16 @@ import (
 )
 
 var db *sql.DB
+var popularityCutoff int
 
 // Close closes the database in the shutdown hook
 func Close() {
 	db.Close()
+}
+
+// SetPopularityCutoff sets the popularity cutoff
+func SetPopularityCutoff(cutoff int) {
+	popularityCutoff = cutoff
 }
 
 // Initialize postgres
@@ -41,7 +47,7 @@ func InsertArtists(items []common.Item) {
 	numInserted := 0
 	for i := 0; i < len(items); i++ {
 		popularity := items[i].Popularity
-		if popularity <= 60 {
+		if popularity <= popularityCutoff {
 			continue
 		}
 		id := items[i].ID
@@ -67,7 +73,7 @@ func UpdateRecommended(id string, recommendedArtists []common.Item) {
 	updateStatement := "UPDATE artists SET recommended = $1 WHERE id = $2"
 	var artists []string
 	for i := 0; i < len(recommendedArtists); i++ {
-		if recommendedArtists[i].Popularity <= 60 {
+		if recommendedArtists[i].Popularity <= popularityCutoff {
 			continue
 		}
 		artists = append(artists, recommendedArtists[i].ID)

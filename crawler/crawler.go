@@ -119,8 +119,10 @@ func pruneRecommendedArtists() {
 
 // Crawl grabs artists on Spotify
 func Crawl(url string, limit int) {
-	crawlArtists(url)
-	crawlRecommendedArtists(limit)
-	pruneRecommendedArtists()
-	updateRecommendedArtists()
+	if postgres.GetArtistCount() == 0 {
+		crawlArtists(url)
+		crawlRecommendedArtists(limit)
+		pruneRecommendedArtists()
+		updateRecommendedArtists()
+	}
 }
